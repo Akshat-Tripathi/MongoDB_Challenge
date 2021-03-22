@@ -35,6 +35,16 @@ func TestFlattenSimple(t *testing.T) {
 			desc:  "simple_float",
 			input: "{\"a\": 3.141592}",
 		},
+		{
+			desc: "simple_all",
+			input: `{
+				"a": 1,
+				"b": true,
+				"c": "hello world",
+				"d": null,
+				"e": 3.141592
+			}`,
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
