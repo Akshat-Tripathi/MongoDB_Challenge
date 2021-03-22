@@ -10,6 +10,17 @@ import (
 
 const format = "\t\"%s%s\": %v,\n"
 
+func formatOutput(output interface{}) string {
+	switch out := output.(type) {
+	case nil:
+		return "null"
+	case string:
+		return "\"" + out + "\""
+	default:
+		return fmt.Sprint(out)
+	}
+}
+
 func flattenJSONHelper(jsonObj map[string]interface{}, namespace string) string {
 	flattened := ""
 	for k, v := range jsonObj {
@@ -17,12 +28,8 @@ func flattenJSONHelper(jsonObj map[string]interface{}, namespace string) string 
 		case map[string]interface{}:
 			//Recursively add children
 			flattened += flattenJSONHelper(obj, namespace+k+".") //Recurse with a new namespace
-		case nil:
-			flattened += fmt.Sprintf(format, namespace, k, "null")
-		case string:
-			flattened += fmt.Sprintf(format, namespace, k, "\""+obj+"\"")
 		default:
-			flattened += fmt.Sprintf(format, namespace, k, v)
+			flattened += fmt.Sprintf(format, namespace, k, formatOutput(obj))
 		}
 	}
 	return flattened
