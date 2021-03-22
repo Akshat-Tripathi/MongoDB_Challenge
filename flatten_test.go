@@ -1,13 +1,30 @@
 package main
 
 import (
-	"strings"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var spaceReplacer = strings.NewReplacer("\n", "", "\t", "", " ", "")
+func testEquality(input, output string) bool {
+	jsonInput := make(map[string]interface{})
+	err := json.Unmarshal([]byte(input), &jsonInput)
+	if err != nil {
+		return false
+	}
+	jsonOutput := make(map[string]interface{})
+	err = json.Unmarshal([]byte(input), &jsonOutput)
+	if err != nil {
+		return false
+	}
+	for k, v := range jsonInput {
+		if val, ok := jsonOutput[k]; !ok || val != v {
+			return false
+		}
+	}
+	return true
+}
 
 //TestFlattenSimple makes sure that singleton objects are encoded as themselves
 func TestFlattenSimple(t *testing.T) {
@@ -50,7 +67,7 @@ func TestFlattenSimple(t *testing.T) {
 		t.Run(tC.desc, func(t *testing.T) {
 			output, err := flattenJSON([]byte(tC.input))
 			assert.Nil(t, err)
-			assert.Equal(t, spaceReplacer.Replace(tC.input), spaceReplacer.Replace(output))
+			assert.True(t, testEquality(tC.input, output))
 		})
 	}
 }
