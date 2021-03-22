@@ -119,3 +119,8 @@ func TestFlattenNested(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidJSON(t *testing.T) {
+	_, err := flattenJSON([]byte("{hello"))
+	assert.NotNil(t, err)
+}
