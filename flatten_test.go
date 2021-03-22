@@ -7,6 +7,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func mapEquals(a, b map[string]interface{}) bool {
+	for k, v := range a {
+		val, ok := b[k]
+		if !ok {
+			return false
+		}
+		switch obj := v.(type) {
+		case map[string]interface{}:
+			ok := mapEquals(obj, val.(map[string]interface{}))
+			if !ok {
+				return false
+			}
+		default:
+			if val != v {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func testEquality(input, output string) bool {
 	jsonInput := make(map[string]interface{})
 	err := json.Unmarshal([]byte(input), &jsonInput)
@@ -18,12 +39,7 @@ func testEquality(input, output string) bool {
 	if err != nil {
 		return false
 	}
-	for k, v := range jsonInput {
-		if val, ok := jsonOutput[k]; !ok || val != v {
-			return false
-		}
-	}
-	return true
+	return mapEquals(jsonInput, jsonOutput)
 }
 
 //TestFlattenSimple makes sure that singleton objects are encoded as themselves
@@ -61,6 +77,38 @@ func TestFlattenSimple(t *testing.T) {
 				"d": null,
 				"e": 3.141592
 			}`,
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			output, err := flattenJSON([]byte(tC.input))
+			assert.Nil(t, err)
+			assert.True(t, testEquality(tC.input, output))
+		})
+	}
+}
+
+func TestFlattenNested(t *testing.T) {
+	testCases := []struct {
+		desc, input, output string
+	}{
+		{
+			desc:   "",
+			input:  `{"a": {"a": {"a": {"a": {"a": {"a": {"a": 1}}}}}}}`,
+			output: `{"a.a.a.a.a.a.a": 1}`,
+		},
+		{
+			desc: "",
+			input: `{
+				"a": {
+					"a": {
+						"a": {
+							"a": {
+								"a": {
+									"a": {"a": 1},
+									"b": 3}
+									}}}}}`,
+			output: `{"a.a.a.a.a.a.a": 1, "a.a.a.a.a.b"}`,
 		},
 	}
 	for _, tC := range testCases {
